@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TV + Polygon</title>
+
+    <!-- 👇 Usa EXACTAMENTE este archivo de la carpeta que te dio TradingView -->
+
+
+</head>
+
+<body>
+
+    <select name="drp_forex" id="drp_forex">
+        <option value="EUR_USD">EURUSD</option>
+        <option value="USD_JPY">USDJPY</option>
+        <option value="GBP_USD">GBPUSD</option>
+        <option value="USD_CHF">USDCHF</option>
+        <option value="USD_CAD">USDCAD</option>
+        <option value="AUD_USD">AUDUSD</option>
+        <option value="NZD_USD">NZDUSD</option>
+        <option value="EUR_JPY">EURJPY</option>
+        <option value="GBP_JPY">GBPJPY</option>
+    </select>
+    <select name="drp_time" id="drp_time">
+        <option value="5">5 minutes</option>
+        <option value="15" selected>15 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="60">1 Hour</option>
+    </select>
+    <div style="margin-top:10px;">
+        <div id="chart_forex" style="width:100%;height:50vh;"></div>
+    </div>
+    <!-- Tu datafeed y tu init -->
+    <script src="/charting_library/charting_library.js"></script>
+    <script src="/retrocesoScannerForex.js"></script>
+    <script src="/datafeeduniversal.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let objetosDibujados = [];
+            let symbol = "EUR_USD";
+            let interval = "15";
+            let dataFeed = new UniversalDatafeed("forex", symbol);
+
+            //Forex Chart widget
+
+            let forexWidget = new TradingView.widget({
+                container: "chart_forex",
+                library_path: "/charting_library/",
+                symbol: symbol,
+                interval: interval,
+                autosize: true,
+                datafeed: dataFeed,
+                locale: "en",
+                disabled_features: [
+                    "header_symbol_search",
+                    "header_compare",
+                    "timeframes_toolbar",
+                    "use_localstorage_for_settings",
+                    "create_study_template",
+                    "save_chart_properties_to_local_storage",
+                    "study_templates",
+                    "header_resolutions"
+                ],
+                enabled_features: [],
+                overrides: {
+                    "paneProperties.legendProperties.showSeriesTitle": false,
+                    "paneProperties.legendProperties.showLegend": true, // mantiene los valores OHLC visibles
+                    "symbolWatermarkProperties.color": "rgba(0,0,0,0)",
+                },
+                time_frames: [
+                    { text: "2M", resolution: "60", description: "Últimos 2 meses" }
+                ],
+            });
+            forexWidget.onChartReady(() => {
+                const chart = forexWidget.activeChart();
+
+                chart.getAllStudies().forEach(study => {
+                    if (study.name.toLowerCase().includes("volume")) {
+                        chart.removeEntity(study.id);
+                    }
+                });
+
+
+            });
+
+            const drp_forex = document.getElementById("drp_forex");
+            const drp_Time = document.getElementById("drp_time");
+
+            drp_forex.addEventListener("change", function () {
+                ChargeNewWidget()
+
+            });
+            drp_Time.addEventListener("change", function () {
+                ChargeNewWidget()
+            });
+            function ChargeNewWidget() {
+                let selectedSymbol = drp_forex.value;
+                let time = drp_Time.value;
+                datafeed = new UniversalDatafeed("forex", selectedSymbol);
+                interval = time
+                symbol = selectedSymbol;
+
+
+                forexWidget = new TradingView.widget({
+                    container: "chart_forex",
+                    library_path: "/charting_library/",
+                    symbol: symbol,
+                    interval: interval,
+                    autosize: true,
+                    datafeed: dataFeed,
+                    locale: "en",
+                    disabled_features: [
+                        "header_symbol_search",
+                        "header_compare",
+                        "timeframes_toolbar",
+                        "use_localstorage_for_settings",
+                        "create_study_template",
+                        "save_chart_properties_to_local_storage",
+                        "study_templates",
+                        "header_resolutions"
+                    ],
+                    enabled_features: [],
+                    overrides: {
+                        "paneProperties.legendProperties.showSeriesTitle": false,
+                        "paneProperties.legendProperties.showLegend": true, // mantiene los valores OHLC visibles
+                        "symbolWatermarkProperties.color": "rgba(0,0,0,0)",
+                    },
+                    time_frames: [
+                        { text: "2M", resolution: "60", description: "Últimos 2 meses" }
+                    ],
+                });
+                forexWidget.onChartReady(() => {
+                    const chart = forexWidget.activeChart();
+
+                    chart.getAllStudies().forEach(study => {
+                        if (study.name.toLowerCase().includes("volume")) {
+                            chart.removeEntity(study.id);
+                        }
+                    });
+
+
+                });
+            }
+
+
+            // Evaluar cada 15 minutos
+
+            setInterval(() => {
+                const chart = forexWidget.activeChart();
+
+                const ResultScanner = dataFeed.GetResultScanner()
+
+
+
+
+                if (ResultScanner) {
+                    if (Object.keys(ResultScanner).length !== 0) {
+                        dibujarSetup(chart, ResultScanner);
+
+                    }
+
+                } else {
+                    chart.removeAllShapes();
+
+                }
+            }, 5000);
+
+
+            // === Dibujar en el gráfico ===
+            function dibujarSetup(chart, setup) {
+                chart.removeAllShapes();
+
+                const { fibs, ob, fvg, labels } = setup;
+
+                CreatePositionLarge(chart, fibs, fibs.time);
+
+                crearLabel(chart, fibs.fib35, `TP ${redondear2Decimales(labels.TP)}\npips:${extraerTresDigitos(labels.TP2Pips.toString())}`, "#66cc00", fibs.time);
+                crearLabel(chart, fibs.fib67, `PE ${redondear2Decimales(labels.PE)}`, "#0099ff", fibs.time);
+                crearLabel(chart, fibs.fib95, `SL ${redondear2Decimales(labels.SL)}\npips:${extraerTresDigitos(labels.SLPips.toString())}`, "#ff0000", fibs.time);
+
+                if (ob) {
+                    crearCaja(chart, ob.top, ob.bottom, "#ff3333", 0.4, ob.time);
+                }
+                if (fvg) {
+                    crearCaja(chart, fvg.top, fvg.bottom, "#ffff00", 0.4, fvg.time);
+                }
+            }
+
+
+
+
+            function crearLabel(chart, price, text, color = "#ffffff", time) {
+                const visible = chart.getVisibleRange();
+                if (!visible) return;
+                const leftTime = visible.to + 16000;
+
+                const now = Math.floor(time / 1000);
+                chart.createMultipointShape(
+                    [{ time: leftTime, price }],
+                    {
+                        shape: "comment",
+                        text: text,
+                        overrides: {
+                            color: "#fff",
+                            backgroundColor: color,  // fondo rojo (puedes cambiar tono)
+                            fontsize: 12,
+                            bold: true,
+                            borderColor: color
+                        }
+                    }
+                );
+            }
+
+            function crearCaja(chart, top, bottom, color, opacity = 0.3, time) {
+                const now = Math.floor(time / 1000);
+                chart.createMultipointShape(
+                    [
+                        { time: now, price: top },
+                        { time: now + 96000, price: bottom }
+                    ],
+                    {
+                        shape: "rectangle",
+                        overrides: {
+                            color: color,           // borde
+                            backgroundColor: color, // relleno
+                            transparency: (1 - opacity) * 100
+                        }
+                    }
+                );
+            }
+
+            function CreatePositionLarge(chart, fibs, time) {
+                const lastBarTime = Math.floor(time / 1000);
+                const visible = chart.getVisibleRange();
+                if (!visible) return;
+                const leftTime = visible.to;
+                const entryPrice = fibs.fib67;   // precio actual aprox.
+                const takeProfit = fibs.fib35;   // objetivo arriba
+                const stopLoss = fibs.fib95;     // stop abajo
+
+
+                createLine(chart, lastBarTime, leftTime, takeProfit, '#089981');
+                createLine(chart, lastBarTime, leftTime, entryPrice, '#0099ff');
+                createLine(chart, lastBarTime, leftTime, stopLoss, '#F23645');
+
+
+            }
+            function createLine(chart, time, leftTime, price, color) {
+                chart.createMultipointShape(
+                    [
+                        { time: time, price: price },
+                        { time: leftTime, price: price }
+                    ],
+                    {
+                        shape: 'trend_line',
+                        disableSelection: true,
+                        disableSave: true,
+                        overrides: {
+                            linecolor: color,
+                        }
+
+                    }
+                );
+            }
+            function extraerTresDigitos(numStr) {
+                // Asegura que sea número válido
+                let num = Number(numStr);
+                num = Math.abs(num);
+                if (isNaN(num)) return null;
+
+                // Caso 1: número menor a 1 (tiene decimales relevantes)
+                if (num < 1 && num > 0) {
+                    return Math.floor(num * 10000); // multiplica por 10000 para captar "0.0236" → 236
+                }
+
+                // Caso 2: número mayor o igual a 1
+                return Math.floor(num / Math.pow(10, Math.floor(Math.log10(num)) - 2));
+            }
+
+            function redondear2Decimales(valor) {
+                // Convierte el valor a número, redondea y elimina ceros innecesarios
+                return parseFloat(parseFloat(valor).toFixed(2));
+            }
+
+        });
+    </script>
+</body>
+
+
+</html>
