@@ -309,7 +309,7 @@ class UniversalDatafeed {
         while (currentFrom < to) {
             const currentTo = Math.min(currentFrom + maxRange, to);
 
-            const url = `https://api.coinbase.com/api/v3/brokerage/market/products/${this.ticker}/candles?start=${currentFrom}&end=${currentTo}&granularity=${granularity}`;
+            const url = `/api/coinbase/${this.ticker}?start=${currentFrom}&end=${currentTo}&granularity=${granularity}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();

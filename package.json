@@ -1,8 +1,12 @@
 {
+  "name": "tradingviewscripts",
+  "type": "module",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
   }
 }
