@@ -34,7 +34,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use((req, res, next) => {
-    const allowedOrigins = [ALLOWED_ORIGINS];
+    const allowedOrigins = ALLOWED_ORIGINS
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key");
 
