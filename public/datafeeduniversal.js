@@ -52,7 +52,7 @@ class UniversalDatafeed {
             const from = Math.floor(periodParams.from);
             const to = Math.floor(periodParams.to);
 
-
+            console.log(key);
             this.lastBar[key] = null;
             this.lastRequest = null;
             let allBars = [];
@@ -69,29 +69,29 @@ class UniversalDatafeed {
                 .sort((a, b) => a.time - b.time)
                 .filter(b => b.time <= Date.now());
 
-            if (!this.barsSaved) this.barsSaved = [];
+            if (!this.barsSaved[key]) this.barsSaved[key] = [];
 
-            if (this.barsSaved.length === 0) {
-                this.barsSaved = uniqueBars;
+            if (this.barsSaved[key].length === 0) {
+                this.barsSaved[key] = uniqueBars;
             } else {
-                const merged = [...this.barsSaved, ...uniqueBars];
-                this.barsSaved = Array.from(new Map(merged.map(b => [b.time, b])).values())
+                const merged = [...this.barsSaved[key], ...uniqueBars];
+                this.barsSaved[key] = Array.from(new Map(merged.map(b => [b.time, b])).values())
                     .sort((a, b) => a.time - b.time);
             }
 
 
 
-            this.lastBar[key] = this.barsSaved.at(-1);
+            this.lastBar[key] = this.barsSaved[key].at(-1);
             this.lastRequest = { key, from, to, data: allBars };
 
             // Si el scanner existe, actualízalo con las barras
             if (this.scanner?.fillbars) {
-                this.resultScanner = this.scanner.fillbars(this.barsSaved);
+                this.resultScanner = this.scanner.fillbars(this.barsSaved[key]);
 
             }
 
 
-            onHistoryCallback(this.barsSaved, { noData: allBars.length === 0 });
+            onHistoryCallback(this.barsSaved[key], { noData: allBars.length === 0 });
 
 
         } catch (err) {
@@ -358,13 +358,7 @@ class UniversalDatafeed {
         }
         const url = `/api/oanda/${this.ticker}?start=${fromDateFormat}&end=${toDateFormat}&granularity=${granularity}`;
 
-        const res = await fetch(url, {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${this.token}`,
-                "Content-Type": "application/json"
-            }
-        });
+        const res = await fetch(url);
 
         const data = await res.json();
         allbars = data.candles.map(x => ({

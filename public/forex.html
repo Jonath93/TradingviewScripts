@@ -45,7 +45,6 @@
             let dataFeed = new UniversalDatafeed("forex", symbol);
 
             //Forex Chart widget
-
             let forexWidget = new TradingView.widget({
                 container: "chart_forex",
                 library_path: "/charting_library/",
@@ -62,20 +61,24 @@
                     "create_study_template",
                     "save_chart_properties_to_local_storage",
                     "study_templates",
-                    "header_resolutions"
+                    "header_resolutions",
+                    "volume_force_overlay",
+                    "show_volume_force_overlay",
                 ],
-                enabled_features: [],
                 overrides: {
                     "paneProperties.legendProperties.showSeriesTitle": false,
                     "paneProperties.legendProperties.showLegend": true, // mantiene los valores OHLC visibles
                     "symbolWatermarkProperties.color": "rgba(0,0,0,0)",
                 },
+                enabled_features: [],
+
                 time_frames: [
                     { text: "2M", resolution: "60", description: "Últimos 2 meses" }
                 ],
             });
             forexWidget.onChartReady(() => {
                 const chart = forexWidget.activeChart();
+
 
                 chart.getAllStudies().forEach(study => {
                     if (study.name.toLowerCase().includes("volume")) {
@@ -97,6 +100,8 @@
                 ChargeNewWidget()
             });
             function ChargeNewWidget() {
+                forexWidget.remove();
+
                 let selectedSymbol = drp_forex.value;
                 let time = drp_Time.value;
                 datafeed = new UniversalDatafeed("forex", selectedSymbol);
@@ -120,7 +125,9 @@
                         "create_study_template",
                         "save_chart_properties_to_local_storage",
                         "study_templates",
-                        "header_resolutions"
+                        "header_resolutions",
+                        "volume_force_overlay",
+                        "show_volume_force_overlay",
                     ],
                     enabled_features: [],
                     overrides: {
