@@ -2,13 +2,18 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fetch from "node-fetch"; // npm install node-fetch
-
+import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const token = "889fe42af8e9749df29c56944cd6d831-8a11568b42d21e64a2a0ea8f27a9c1e5";
+const token = process.env.TOKEN;
+const ACCESS_KEY = process.env.ACCESS_KEY;
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
 
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
 app.use((req, res, next) => {
@@ -29,12 +34,12 @@ app.use((req, res, next) => {
     next();
 });
 app.use((req, res, next) => {
-    const allowedOrigins = ["https://tu-dominio.wixsite.com"];
+    const allowedOrigins = [ALLOWED_ORIGINS];
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key");
 
     const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
-    const isValidKey = key === process.env.ACCESS_KEY;
+    const isValidKey = key === ACCESS_KEY;
 
     if (!isAllowedOrigin || !isValidKey) {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
