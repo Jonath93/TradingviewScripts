@@ -354,7 +354,8 @@ class UniversalDatafeed {
             case "1D": granularity = "D"; break;
             default: granularity = "M5";
         }
-        const url = `${this.baseUrlOANDA}/v3/instruments/${this.ticker}/candles?granularity=${granularity}&from=${fromDateFormat}&to=${toDateFormat}`;
+        const url = `/api/oanda/${this.ticker}?start=${fromDateFormat}&end=${toDateFormat}&granularity=${granularity}`;
+
         const res = await fetch(url, {
             method: "GET",
             headers: {
