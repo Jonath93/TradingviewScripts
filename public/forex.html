@@ -39,10 +39,10 @@
     <script src="/datafeeduniversal.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            let objetosDibujados = [];
             let symbol = "EUR_USD";
             let interval = "15";
             let dataFeed = new UniversalDatafeed("forex", symbol);
+            let ChartCreates = [];
 
             //Forex Chart widget
             let forexWidget = new TradingView.widget({
@@ -170,7 +170,7 @@
                     }
 
                 } else {
-                    chart.removeAllShapes();
+                    CleanChartsHelper(chart);
 
                 }
             }, 5000);
@@ -178,7 +178,8 @@
 
             // === Dibujar en el gráfico ===
             function dibujarSetup(chart, setup) {
-                chart.removeAllShapes();
+                //chart.removeAllShapes();
+                CleanChartsHelper(chart);
 
                 const { fibs, ob, fvg, labels } = setup;
 
@@ -205,7 +206,7 @@
                 const leftTime = visible.to + 16000;
 
                 const now = Math.floor(time / 1000);
-                chart.createMultipointShape(
+                const idChart = chart.createMultipointShape(
                     [{ time: leftTime, price }],
                     {
                         shape: "comment",
@@ -218,12 +219,15 @@
                             borderColor: color
                         }
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
+
             }
 
             function crearCaja(chart, top, bottom, color, opacity = 0.3, time) {
                 const now = Math.floor(time / 1000);
-                chart.createMultipointShape(
+                const idChart = chart.createMultipointShape(
                     [
                         { time: now, price: top },
                         { time: now + 96000, price: bottom }
@@ -236,7 +240,9 @@
                             transparency: (1 - opacity) * 100
                         }
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
             }
 
             function CreatePositionLarge(chart, fibs, time) {
@@ -256,7 +262,7 @@
 
             }
             function createLine(chart, time, leftTime, price, color) {
-                chart.createMultipointShape(
+                const idChart = chart.createMultipointShape(
                     [
                         { time: time, price: price },
                         { time: leftTime, price: price }
@@ -270,7 +276,9 @@
                         }
 
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
             }
             function extraerTresDigitos(numStr) {
                 // Asegura que sea número válido
@@ -290,6 +298,10 @@
             function redondear2Decimales(valor) {
                 // Convierte el valor a número, redondea y elimina ceros innecesarios
                 return parseFloat(parseFloat(valor).toFixed(2));
+            }
+            function CleanChartsHelper(chart) {
+                ChartCreates.forEach(id => chart.removeEntity(id));
+                ChartCreates = []; // limpia la lista
             }
 
         });

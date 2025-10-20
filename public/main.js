@@ -1,10 +1,10 @@
 
 
 document.addEventListener("DOMContentLoaded", function () {
-  let objetosDibujados = [];
   let symbol = "BTC-USD";
   let interval = "15";
   let dataFeed = new UniversalDatafeed("crypto", symbol);
+  let ChartCreates = [];
 
 
 
@@ -153,8 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
     } else {
-      chart.removeAllShapes();
-
+      CleanChartsHelper(chart);
     }
 
 
@@ -163,8 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   //funcions 
   function dibujarSetup(chart, setup) {
-    chart.removeAllShapes();
-
+    CleanChartsHelper(chart);
     const { fibs, ob, fvg, labels } = setup;
     crearLinea(chart, fibs.fib0, "#66cc00", "TP2", fibs.time);
     crearLinea(chart, fibs.fib35, "#66cc00", "TP1", fibs.time);
@@ -207,9 +205,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
       }
-    );
-    objetosDibujados.push(shape);
-    return shape;
+    ).then(id => {
+      ChartCreates.push(id); // aquí sí tienes el ID real
+    });
   }
 
 
@@ -232,7 +230,9 @@ document.addEventListener("DOMContentLoaded", function () {
           borderColor: color
         }
       }
-    );
+    ).then(id => {
+      ChartCreates.push(id); // aquí sí tienes el ID real
+    });
   }
 
   function crearCaja(chart, top, bottom, color, opacity = 0.3, time) {
@@ -250,7 +250,9 @@ document.addEventListener("DOMContentLoaded", function () {
           transparency: (1 - opacity) * 100
         }
       }
-    );
+    ).then(id => {
+      ChartCreates.push(id); // aquí sí tienes el ID real
+    });
   }
 
   function extraerTresDigitos(numStr) {
@@ -271,5 +273,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Convierte el valor a número, redondea y elimina ceros innecesarios
     return parseFloat(parseFloat(valor).toFixed(2));
   }
-
+  function CleanChartsHelper(chart) {
+    ChartCreates.forEach(id => chart.removeEntity(id));
+    ChartCreates = []; // limpia la lista
+  }
 });

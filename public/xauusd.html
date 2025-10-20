@@ -18,10 +18,10 @@
     <script>
 
         document.addEventListener("DOMContentLoaded", function () {
-            let objetosDibujados = [];
             let symbol = "XAU_USD";
             let interval = "15";
             let dataFeed = new UniversalDatafeed("forex", symbol);
+            let ChartCreates = [];
 
 
             // xauusd Chart widget
@@ -81,7 +81,7 @@
                     dibujarSetup(chart, ResultScanner);
 
                 } else {
-                    chart.removeAllShapes();
+                    CleanChartsHelper(chart);
 
                 }
             }, 5000);
@@ -90,7 +90,7 @@
             //funcions 
             // === Dibujar en el gráfico ===
             function dibujarSetup(chart, setup) {
-                chart.removeAllShapes();
+                CleanChartsHelper(chart);
 
                 const { fibs, ob, fvg, labels } = setup;
 
@@ -132,7 +132,9 @@
                             borderColor: color
                         }
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
             }
 
 
@@ -151,7 +153,9 @@
                             transparency: (1 - opacity) * 100
                         }
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
             }
 
 
@@ -189,7 +193,9 @@
                         }
 
                     }
-                );
+                ).then(id => {
+                    ChartCreates.push(id); // aquí sí tienes el ID real
+                });
             }
             function extraerTresDigitos(numStr) {
                 // Asegura que sea número válido
@@ -209,7 +215,10 @@
                 // Convierte el valor a número, redondea y elimina ceros innecesarios
                 return parseFloat(parseFloat(valor).toFixed(2));
             }
-
+            function CleanChartsHelper(chart) {
+                ChartCreates.forEach(id => chart.removeEntity(id));
+                ChartCreates = []; // limpia la lista
+            }
         });
     </script>
 </body>
