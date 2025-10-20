@@ -5,12 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="dropdownStyle.css">
+
 </head>
 
 <body>
+    <div class="dropdown-container">
 
+        <select name="drp_time" id="drp_time">
+            <option value="5">5 minutes</option>
+            <option value="15" selected>15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="60">1 Hour</option>
+        </select>
+    </div>
     <div style="margin-top:10px;">
-        <div id="chart_xauusd" style="width:100%;height:50vh;"></div>
+        <div id="chart_xauusd" class="chart-container"></div>
     </div>
     <script src="/charting_library/charting_library.js"></script>
     <script src="/retrocesoScannerForex.js"></script>
@@ -69,6 +79,27 @@
 
 
             });
+            const drp_Time = document.getElementById("drp_time");
+
+            drp_Time.addEventListener("change", function () {
+                ChargeNewWidget()
+            });
+            function ChargeNewWidget() {
+
+                let time = drp_Time.value;
+                interval = time
+
+
+
+                xauusdWidget.onChartReady(() => {
+                    const chart = xauusdWidget.activeChart();
+
+                    chart.setResolution(interval, () => {
+                    });
+
+
+                });
+            }
 
 
             setInterval(() => {

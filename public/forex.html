@@ -7,31 +7,34 @@
     <title>TV + Polygon</title>
 
     <!-- 👇 Usa EXACTAMENTE este archivo de la carpeta que te dio TradingView -->
+    <link rel="stylesheet" href="dropdownStyle.css">
 
 
 </head>
 
 <body>
+    <div class="dropdown-container">
+        <select name="drp_forex" id="drp_forex">
+            <option value="EUR_USD">EURUSD</option>
+            <option value="USD_JPY">USDJPY</option>
+            <option value="GBP_USD">GBPUSD</option>
+            <option value="USD_CHF">USDCHF</option>
+            <option value="USD_CAD">USDCAD</option>
+            <option value="AUD_USD">AUDUSD</option>
+            <option value="NZD_USD">NZDUSD</option>
+            <option value="EUR_JPY">EURJPY</option>
+            <option value="GBP_JPY">GBPJPY</option>
+        </select>
+        <select name="drp_time" id="drp_time">
+            <option value="5">5 minutes</option>
+            <option value="15" selected>15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="60">1 Hour</option>
+        </select>
+    </div>
 
-    <select name="drp_forex" id="drp_forex">
-        <option value="EUR_USD">EURUSD</option>
-        <option value="USD_JPY">USDJPY</option>
-        <option value="GBP_USD">GBPUSD</option>
-        <option value="USD_CHF">USDCHF</option>
-        <option value="USD_CAD">USDCAD</option>
-        <option value="AUD_USD">AUDUSD</option>
-        <option value="NZD_USD">NZDUSD</option>
-        <option value="EUR_JPY">EURJPY</option>
-        <option value="GBP_JPY">GBPJPY</option>
-    </select>
-    <select name="drp_time" id="drp_time">
-        <option value="5">5 minutes</option>
-        <option value="15" selected>15 minutes</option>
-        <option value="30">30 minutes</option>
-        <option value="60">1 Hour</option>
-    </select>
     <div style="margin-top:10px;">
-        <div id="chart_forex" style="width:100%;height:50vh;"></div>
+        <div id="chart_forex" class="chart-container"></div>
     </div>
     <!-- Tu datafeed y tu init -->
     <script src="/charting_library/charting_library.js"></script>

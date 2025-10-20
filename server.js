@@ -41,10 +41,10 @@ app.use((req, res, next) => {
     const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
     const isValidKey = key === ACCESS_KEY;
 
-    if (!isAllowedOrigin || !isValidKey) {
+    /*if (!isAllowedOrigin || !isValidKey) {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
         return res.status(403).send("Acceso no autorizado");
-    }
+    }*/
 
     next();
 });

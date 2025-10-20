@@ -6,26 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TV + Polygon</title>
 
-
-
+  <link rel="stylesheet" href="dropdownStyle.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+  <div class="dropdown-container">
 
-  <select name="drp_cripto" id="drp_criptp">
-    <option value="BTC-USD">BTCUSD</option>
-    <option value="ETH-USD">ETHUSD</option>
-    <option value="XRP-USD">XRPUSD</option>
-  </select>
-  <select name="drp_time" id="drp_time">
-    <option value="5">5 minutes</option>
-    <option value="15" selected>15 minutes</option>
-    <option value="30">30 minutes</option>
-    <option value="60">1 Hour</option>
-  </select>
-
-  <div id="chart_cripto" style="width:100%;height:50vh;"></div>
+    <select name="drp_cripto" id="drp_criptp">
+      <option value="BTC-USD">BTCUSD</option>
+      <option value="ETH-USD">ETHUSD</option>
+      <option value="XRP-USD">XRPUSD</option>
+    </select>
+    <select name="drp_time" id="drp_time">
+      <option value="5">5 minutes</option>
+      <option value="15" selected>15 minutes</option>
+      <option value="30">30 minutes</option>
+      <option value="60">1 Hour</option>
+    </select>
+  </div>
+  <div id="chart_cripto" class="chart-container"></div>
 
   <!-- Tu datafeed y tu init -->
   <script src="/charting_library/charting_library.js"></script>

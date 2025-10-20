@@ -52,7 +52,6 @@ class UniversalDatafeed {
             const from = Math.floor(periodParams.from);
             const to = Math.floor(periodParams.to);
 
-            console.log(key);
             this.lastBar[key] = null;
             this.lastRequest = null;
             let allBars = [];
