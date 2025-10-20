@@ -28,6 +28,21 @@ app.use((req, res, next) => {
     );
     next();
 });
+app.use((req, res, next) => {
+    const allowedOrigins = ["https://tu-dominio.wixsite.com"];
+    const origin = req.get("origin") || req.get("referer") || "";
+    const key = req.query.key || req.get("x-access-key");
+
+    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
+    const isValidKey = key === process.env.ACCESS_KEY;
+
+    if (!isAllowedOrigin || !isValidKey) {
+        console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
+        return res.status(403).send("Acceso no autorizado");
+    }
+
+    next();
+});
 
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
