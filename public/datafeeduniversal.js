@@ -108,7 +108,9 @@ class UniversalDatafeed {
             return;
         }
         //test ws://localhost:3000"
-        const WS_URL = (this.type === "crypto") ? "wss://advanced-trade-ws.coinbase.com" : "ws://scannerapi-production.up.railway.app";
+        const WS_URL = (this.type === "crypto")
+            ? "wss://advanced-trade-ws.coinbase.com"
+            : "wss://scannerapi-production.up.railway.app";
         this.socket = new WebSocket(WS_URL);
 
 
