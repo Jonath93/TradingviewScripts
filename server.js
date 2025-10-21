@@ -17,6 +17,21 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
 app.use((req, res, next) => {
+
+    next();
+});
+app.use((req, res, next) => {
+    const allowedOrigins = ALLOWED_ORIGINS
+    const origin = req.get("origin") || req.get("referer") || "";
+    const key = req.query.key || req.get("x-access-key");
+
+    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
+    const isValidKey = key === ACCESS_KEY;
+
+    if (!isAllowedOrigin || !isValidKey) {
+        console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
+        return res.status(403).send("Acceso no autorizado");
+    }
     res.setHeader(
         "Content-Security-Policy",
         [
@@ -31,21 +46,6 @@ app.use((req, res, next) => {
             "child-src blob:"
         ].join("; ")
     );
-    next();
-});
-app.use((req, res, next) => {
-    const allowedOrigins = ALLOWED_ORIGINS
-    const origin = req.get("origin") || req.get("referer") || "";
-    const key = req.query.key || req.get("x-access-key");
-
-    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
-    const isValidKey = key === ACCESS_KEY;
-
-    /*if (!isAllowedOrigin || !isValidKey) {
-        console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
-        return res.status(403).send("Acceso no autorizado");
-    }*/
-
     next();
 });
 
