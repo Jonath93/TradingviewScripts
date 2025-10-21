@@ -7,24 +7,22 @@ import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const app = express();
+
+// 🔑 Variables de entorno
 const token = process.env.TOKEN;
+const ACCESS_KEY = process.env.ACCESS_KEY;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
-
-
-
-
+// 🧩 Configuración CORS
 const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir si no hay origin (por ejemplo, en Postman o requests internos)
-        if (!origin) return callback(null, true);
-
-        // Validar si está en la lista
-        if (ALLOWED_ORIGINS.some((url) => origin.startsWith(url))) {
+        if (!origin) return callback(null, true); // Permitir Postman o local
+        if (ALLOWED_ORIGINS.some(url => origin.startsWith(url))) {
             callback(null, true);
         } else {
             console.warn("🚫 CORS bloqueado para origen:", origin);
@@ -35,14 +33,14 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "x-access-key", "Authorization"],
     credentials: true,
 };
-
 app.use(cors(corsOptions));
 
-
+// 🛡️ Seguridad y cabeceras CSP
 app.use((req, res, next) => {
     const frameAncestors = ALLOWED_ORIGINS.length
         ? ALLOWED_ORIGINS.join(" ")
         : "'none'";
+
     res.setHeader(
         "Content-Security-Policy",
         [
@@ -58,18 +56,18 @@ app.use((req, res, next) => {
             `frame-ancestors ${frameAncestors}`,
         ].join("; ")
     );
-    // Para navegadores antiguos, refuerzo adicional
-    res.removeHeader("X-Frame-Options");
 
+    // 🚫 Eliminar X-Frame-Options (causa conflicto con CSP)
+    res.removeHeader("X-Frame-Options");
     next();
 });
 
-// 🔐 Middleware de validación de clave
-app.use((req, res, next) => {
+// 🔐 Validación de ACCESS_KEY
+app.use("/api", (req, res, next) => {
     const clientKey = req.query.key || req.get("x-access-key");
 
     if (!clientKey) {
-        return res.status(401).json({ error: "Falta encabezado x-access-key" });
+        return res.status(401).json({ error: "Falta encabezado o parámetro x-access-key" });
     }
 
     if (clientKey !== ACCESS_KEY) {
@@ -79,6 +77,8 @@ app.use((req, res, next) => {
 
     next();
 });
+
+// 🌐 Ruta: Coinbase
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
     const { start, end, granularity } = req.query;
@@ -89,7 +89,6 @@ app.get("/api/coinbase/:symbol", async (req, res) => {
         const response = await fetch(url);
         const text = await response.text();
 
-        // Verificamos si realmente devolvió JSON o HTML
         if (text.trim().startsWith("<")) {
             console.error("⚠️ Coinbase devolvió HTML, no JSON:", text.slice(0, 100));
             return res.status(502).json({ error: "Coinbase devolvió HTML en lugar de JSON" });
@@ -102,6 +101,8 @@ app.get("/api/coinbase/:symbol", async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
+
+// 🌐 Ruta: OANDA
 app.get("/api/oanda/:symbol", async (req, res) => {
     const { symbol } = req.params;
     const { start, end, granularity } = req.query;
@@ -118,24 +119,23 @@ app.get("/api/oanda/:symbol", async (req, res) => {
         });
         const text = await response.text();
 
-        // Verificamos si realmente devolvió JSON o HTML
         if (text.trim().startsWith("<")) {
-            console.error("⚠️ Coinbase devolvió HTML, no JSON:", text.slice(0, 100));
-            return res.status(502).json({ error: "Coinbase devolvió HTML en lugar de JSON" });
+            console.error("⚠️ OANDA devolvió HTML, no JSON:", text.slice(0, 100));
+            return res.status(502).json({ error: "OANDA devolvió HTML en lugar de JSON" });
         }
 
         const data = JSON.parse(text);
         res.json(data);
     } catch (err) {
-        console.error("❌ Error al obtener datos de Coinbase:", err);
+        console.error("❌ Error al obtener datos de OANDA:", err);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
-// ✅ Servir archivos estáticos (tu carpeta /public)
+
+// 📂 Archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 
-
-// ✅ Rutas específicas primero
+// 📄 Páginas HTML específicas
 app.get("/forex", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "forex.html"));
 });
@@ -144,12 +144,12 @@ app.get("/xauusd", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "xauusd.html"));
 });
 
-// ✅ Fallback general AL FINAL
-app.get((req, res) => {
+// 🏠 Fallback general
+app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-
+// 🚀 Iniciar servidor
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`✅ Servidor iniciado en http://localhost:${port}`);
