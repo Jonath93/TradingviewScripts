@@ -22,15 +22,14 @@ app.use((req, res, next) => {
     const origin = req.get("origin") || req.get("referer") || "";
 
     // ⚠️ Saltar verificación para archivos estáticos y peticiones internas
+    // ⚙️ Excepciones — no validar recursos estáticos ni librerías
     if (
         req.path.startsWith("/charting_library") ||
-        req.path.startsWith("/public") ||
-        req.path.startsWith("/favicon") ||
-        req.path.startsWith("/_next") ||  // por si usas algún bundler o CDN
-        req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|map)$/i)
+        req.path.match(/\.(js|css|png|jpg|jpeg|svg|ico|map)$/i)
     ) {
         return next();
     }
+
 
     // ✅ Validar origen
     const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
