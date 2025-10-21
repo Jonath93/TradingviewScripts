@@ -15,7 +15,26 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .map(s => s.trim())
     .filter(Boolean);
 
-// ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use((req, res, next) => {
+    const origin = req.get("origin") || "";
+    const allowedOrigins = ALLOWED_ORIGINS;
+
+    if (allowedOrigins.some(url => origin.startsWith(url))) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-access-key");
+    }
+
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+
+    next();
+});
+// ✅ Encabezado CSP (TradingView, blobs, etc.)
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
@@ -33,21 +52,22 @@ app.use((req, res, next) => {
     );
     next();
 });
-app.use((req, res, next) => {
-    const allowedOrigins = ALLOWED_ORIGINS
+
+app.use("/api", (req, res, next) => {
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key");
 
-    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
+    const isAllowedOrigin = ALLOWED_ORIGINS.some(url => origin.startsWith(url));
     const isValidKey = key === ACCESS_KEY;
 
-    /*if (!isAllowedOrigin || !isValidKey) {
+    if (!isAllowedOrigin || !isValidKey) {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
         return res.status(403).send("Acceso no autorizado");
-    }*/
+    }
 
     next();
 });
+
 
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
