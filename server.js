@@ -15,11 +15,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .filter(Boolean);
 
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
-app.use(
-    "/charting_library",
-    express.static(path.join(__dirname, "public/charting_library"))
-);
-app.use(express.static(path.join(__dirname, "public")));
+
 
 app.use((req, res, next) => {
     const allowedOrigins = ALLOWED_ORIGINS
@@ -34,6 +30,11 @@ app.use((req, res, next) => {
 
     next();
 });
+app.use(
+    "/charting_library",
+    express.static(path.join(__dirname, "public/charting_library"))
+);
+app.use(express.static(path.join(__dirname, "public")));
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
