@@ -59,7 +59,7 @@ app.use((req, res, next) => {
         ].join("; ")
     );
     // Para navegadores antiguos, refuerzo adicional
-    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.removeHeader("X-Frame-Options");
 
     next();
 });
