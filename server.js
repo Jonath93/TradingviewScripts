@@ -7,22 +7,24 @@ import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
-
-// 🔑 Variables de entorno
 const token = process.env.TOKEN;
-const ACCESS_KEY = process.env.ACCESS_KEY;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
-// 🧩 Configuración CORS
+
+
+
+
 const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true); // Permitir Postman o local
-        if (ALLOWED_ORIGINS.some(url => origin.startsWith(url))) {
+        // Permitir si no hay origin (por ejemplo, en Postman o requests internos)
+        if (!origin) return callback(null, true);
+
+        // Validar si está en la lista
+        if (ALLOWED_ORIGINS.some((url) => origin.startsWith(url))) {
             callback(null, true);
         } else {
             console.warn("🚫 CORS bloqueado para origen:", origin);
@@ -33,14 +35,35 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "x-access-key", "Authorization"],
     credentials: true,
 };
-app.use(cors(corsOptions));
 
-// 🛡️ Seguridad y cabeceras CSP
+app.use(cors(corsOptions));
+// ✅ Aplica CORS globalmente
+app.use((req, res, next) => {
+    const origin = req.get("origin") || "";
+    const referer = req.get("referer") || "";
+    const fetchDest = req.get("sec-fetch-dest") || "";
+
+    const autorizado = ALLOWED_ORIGINS.some(url =>
+        origin.startsWith(url) || referer.startsWith(url)
+    );
+
+    // Si no está dentro de un iframe o el dominio no es permitido → bloquear
+    if (!autorizado || fetchDest !== "iframe") {
+        console.warn("🚫 Acceso directo bloqueado:", origin || referer || req.ip);
+        return res.status(403).send("Acceso no autorizado");
+    }
+
+    next();
+});
+// ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
+
+
+
+
 app.use((req, res, next) => {
     const frameAncestors = ALLOWED_ORIGINS.length
         ? ALLOWED_ORIGINS.join(" ")
         : "'none'";
-
     res.setHeader(
         "Content-Security-Policy",
         [
@@ -56,29 +79,16 @@ app.use((req, res, next) => {
             `frame-ancestors ${frameAncestors}`,
         ].join("; ")
     );
-
-    // 🚫 Eliminar X-Frame-Options (causa conflicto con CSP)
-    res.removeHeader("X-Frame-Options");
+    // Para navegadores antiguos, refuerzo adicional
+    if (ALLOWED_ORIGINS.length > 0) {
+        res.setHeader("X-Frame-Options", `ALLOW-FROM ${ALLOWED_ORIGINS[0]}`);
+    } else {
+        res.setHeader("X-Frame-Options", "DENY");
+    }
     next();
 });
 
-// 🔐 Validación de ACCESS_KEY
-app.use("/api", (req, res, next) => {
-    const clientKey = req.query.key || req.get("x-access-key");
 
-    if (!clientKey) {
-        return res.status(401).json({ error: "Falta encabezado o parámetro x-access-key" });
-    }
-
-    if (clientKey !== ACCESS_KEY) {
-        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
-        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
-    }
-
-    next();
-});
-
-// 🌐 Ruta: Coinbase
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
     const { start, end, granularity } = req.query;
@@ -89,6 +99,7 @@ app.get("/api/coinbase/:symbol", async (req, res) => {
         const response = await fetch(url);
         const text = await response.text();
 
+        // Verificamos si realmente devolvió JSON o HTML
         if (text.trim().startsWith("<")) {
             console.error("⚠️ Coinbase devolvió HTML, no JSON:", text.slice(0, 100));
             return res.status(502).json({ error: "Coinbase devolvió HTML en lugar de JSON" });
@@ -101,8 +112,6 @@ app.get("/api/coinbase/:symbol", async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
-
-// 🌐 Ruta: OANDA
 app.get("/api/oanda/:symbol", async (req, res) => {
     const { symbol } = req.params;
     const { start, end, granularity } = req.query;
@@ -119,23 +128,24 @@ app.get("/api/oanda/:symbol", async (req, res) => {
         });
         const text = await response.text();
 
+        // Verificamos si realmente devolvió JSON o HTML
         if (text.trim().startsWith("<")) {
-            console.error("⚠️ OANDA devolvió HTML, no JSON:", text.slice(0, 100));
-            return res.status(502).json({ error: "OANDA devolvió HTML en lugar de JSON" });
+            console.error("⚠️ Coinbase devolvió HTML, no JSON:", text.slice(0, 100));
+            return res.status(502).json({ error: "Coinbase devolvió HTML en lugar de JSON" });
         }
 
         const data = JSON.parse(text);
         res.json(data);
     } catch (err) {
-        console.error("❌ Error al obtener datos de OANDA:", err);
+        console.error("❌ Error al obtener datos de Coinbase:", err);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
-
-// 📂 Archivos estáticos
+// ✅ Servir archivos estáticos (tu carpeta /public)
 app.use(express.static(path.join(__dirname, "public")));
 
-// 📄 Páginas HTML específicas
+
+// ✅ Rutas específicas primero
 app.get("/forex", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "forex.html"));
 });
@@ -144,12 +154,11 @@ app.get("/xauusd", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "xauusd.html"));
 });
 
-// 🏠 Fallback general
-app.get("*", (req, res) => {
+// ✅ Fallback general AL FINAL
+app.get((req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 🚀 Iniciar servidor
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`✅ Servidor iniciado en http://localhost:${port}`);
