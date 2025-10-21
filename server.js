@@ -59,11 +59,8 @@ app.use((req, res, next) => {
         ].join("; ")
     );
     // Para navegadores antiguos, refuerzo adicional
-    if (ALLOWED_ORIGINS.length > 0) {
-        res.setHeader("X-Frame-Options", `ALLOW-FROM ${ALLOWED_ORIGINS[0]}`);
-    } else {
-        res.setHeader("X-Frame-Options", "DENY");
-    }
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+
     next();
 });
 
