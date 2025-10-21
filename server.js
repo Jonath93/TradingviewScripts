@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import fetch from "node-fetch"; // npm install node-fetch
@@ -14,33 +15,32 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .map(s => s.trim())
     .filter(Boolean);
 
+
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir si no hay origin (por ejemplo, en Postman o requests internos)
+        if (!origin) return callback(null, true);
+
+        // Validar si está en la lista
+        if (ALLOWED_ORIGINS.some((url) => origin.startsWith(url))) {
+            callback(null, true);
+        } else {
+            console.warn("🚫 CORS bloqueado para origen:", origin);
+            callback(new Error("No permitido por CORS"));
+        }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-access-key", "Authorization"],
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
+// ✅ Aplica CORS globalmente
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
 
 
-app.use((req, res, next) => {
-    const allowedOrigins = ALLOWED_ORIGINS;
-    const origin = req.get("origin") || req.get("referer") || "";
 
-    // ⚠️ Saltar verificación para archivos estáticos y peticiones internas
-    // ⚙️ Excepciones — no validar recursos estáticos ni librerías
-    if (
-        req.path.startsWith("/charting_library") ||
-        req.path.match(/\.(js|css|png|jpg|jpeg|svg|ico|map)$/i)
-    ) {
-        return next();
-    }
-
-
-    // ✅ Validar origen
-    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
-
-    if (!isAllowedOrigin) {
-        console.warn("🚫 Acceso no autorizado desde:", origin || "(sin origin)");
-        return res.status(403).json({ error: "Acceso no autorizado" });
-    }
-
-    next();
-});
 
 app.use((req, res, next) => {
     res.setHeader(
