@@ -18,20 +18,34 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
 
 app.use((req, res, next) => {
+    // Ignorar peticiones no relevantes (favicon, preflight, etc.)
     if (req.path === "/favicon.ico" || req.method === "OPTIONS") {
         return res.sendStatus(204);
     }
-    const allowedOrigins = ALLOWED_ORIGINS
+
+    // Variables de entorno
+    const allowedOrigins = ALLOWED_ORIGINS || [];
+    const accessKey = ACCESS_KEY;
+
+    // Obtener origen y clave
     const origin = req.get("origin") || req.get("referer") || "";
-    const key = req.query.key || req.get("x-access-key");
+    const key = req.query.key || req.get("x-access-key") || req.get("authorization") || "";
 
-    const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
-    const isValidKey = key === ACCESS_KEY;
+    // Validar origen permitido
+    const isAllowedOrigin = allowedOrigins.some(url =>
+        origin.startsWith(url) || origin.includes(url)
+    );
 
+    // Validar clave de acceso
+    const isValidKey = key === accessKey;
+
+    // Si no cumple, cortar la solicitud
     if (!isAllowedOrigin || !isValidKey) {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
         return res.status(403).send("Acceso no autorizado");
     }
+
+    // Aplicar cabeceras de seguridad
     res.setHeader(
         "Content-Security-Policy",
         [
@@ -46,6 +60,7 @@ app.use((req, res, next) => {
             "child-src blob:"
         ].join("; ")
     );
+
     next();
 });
 
