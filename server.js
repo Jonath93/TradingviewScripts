@@ -9,27 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const token = process.env.TOKEN;
-const ACCESS_KEY = process.env.ACCESS_KEY;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
-// 🔐 Middleware de validación de clave
-app.use((req, res, next) => {
-    const clientKey = req.query.key || req.get("x-access-key");
 
-    if (!clientKey) {
-        return res.status(401).json({ error: "Falta encabezado x-access-key" });
-    }
-
-    if (clientKey !== ACCESS_KEY) {
-        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
-        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
-    }
-
-    next();
-});
 
 
 
@@ -52,10 +37,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ✅ Aplica CORS globalmente
-// ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
-
-
 
 
 app.use((req, res, next) => {
@@ -157,6 +138,21 @@ app.get((req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// 🔐 Middleware de validación de clave
+app.use((req, res, next) => {
+    const clientKey = req.query.key || req.get("x-access-key");
+
+    if (!clientKey) {
+        return res.status(401).json({ error: "Falta encabezado x-access-key" });
+    }
+
+    if (clientKey !== ACCESS_KEY) {
+        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
+        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
+    }
+
+    next();
+});
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`✅ Servidor iniciado en http://localhost:${port}`);
