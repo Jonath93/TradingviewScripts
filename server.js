@@ -17,8 +17,17 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 
 app.use((req, res, next) => {
     // Ignorar peticiones irrelevantes (favicon, preflight)
-    if (req.path === "/favicon.ico" || req.method === "OPTIONS") {
-        return res.sendStatus(204);
+    if (
+        req.path === "/favicon.ico" ||
+        req.method === "OPTIONS" ||
+        req.path.startsWith("/charting_library/") || // librería de TradingView
+        req.path.endsWith(".css") ||
+        req.path.endsWith(".js") ||
+        req.path.endsWith(".png") ||
+        req.path.endsWith(".jpg") ||
+        req.path.endsWith(".svg")
+    ) {
+        return next(); // ✅ Dejar pasar sin validar
     }
 
     const origin = req.get("origin") || req.get("referer") || "";
