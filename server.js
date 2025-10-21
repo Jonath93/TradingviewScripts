@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 
 // 🔐 Middleware de validación de clave
 app.use((req, res, next) => {
-    const clientKey = req.get("x-access-key");
+    const clientKey = req.query.key || req.get("x-access-key");
 
     if (!clientKey) {
         return res.status(401).json({ error: "Falta encabezado x-access-key" });
@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 
     next();
 });
+
 
 
 const corsOptions = {
