@@ -18,18 +18,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 
 
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Permitir si no hay origin (por ejemplo, en Postman o requests internos)
-        if (!origin) return callback(null, true);
 
-        // Validar si está en la lista
-        if (ALLOWED_ORIGINS.some((url) => origin.startsWith(url))) {
-            callback(null, true);
-        } else {
-            console.warn("🚫 CORS bloqueado para origen:", origin);
-            callback(new Error("No permitido por CORS"));
-        }
-    },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "x-access-key", "Authorization"],
     credentials: true,
