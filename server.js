@@ -9,13 +9,18 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const token = process.env.TOKEN;
-const ACCESS_KEY = process.env.ACCESS_KEY;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
+app.use(
+    "/charting_library",
+    express.static(path.join(__dirname, "public/charting_library"))
+);
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use((req, res, next) => {
     const allowedOrigins = ALLOWED_ORIGINS
     const origin = req.get("origin") || req.get("referer") || "";
