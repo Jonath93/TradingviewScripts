@@ -39,6 +39,7 @@ app.use((req, res, next) => {
     // Validar clave de acceso
     const isValidKey = key === accessKey;
 
+    console.log("origin", origin);
     // Si no cumple, cortar la solicitud
     if (!isAllowedOrigin || !isValidKey) {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
