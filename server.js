@@ -53,7 +53,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use((req, res, next) => {
+app.use("/api", (req, res, next) => {
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key");
 
@@ -68,23 +68,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use((req, res, next) => {
-    const origin = req.get("origin") || "";
-    const allowedOrigins = ALLOWED_ORIGINS;
-
-    if (allowedOrigins.some(url => origin.startsWith(url))) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-access-key");
-    }
-
-    // Manejar preflight requests
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(204);
-    }
-
-    next();
-});
 
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
