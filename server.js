@@ -45,6 +45,7 @@ app.use((req, res, next) => {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
         return res.status(403).send("Acceso no autorizado");
     }
+    console.log("ya paso condicion ", isAllowedOrigin);
 
     // Aplicar cabeceras de seguridad
     res.setHeader(
