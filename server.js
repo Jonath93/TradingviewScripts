@@ -67,7 +67,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// 🔐 Middleware de validación de clave
+app.use((req, res, next) => {
+    const clientKey = req.query.key || req.get("x-access-key");
 
+    if (!clientKey) {
+        return res.status(401).json({ error: "Falta encabezado x-access-key" });
+    }
+
+    if (clientKey !== ACCESS_KEY) {
+        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
+        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
+    }
+
+    next();
+});
 app.get("/api/coinbase/:symbol", async (req, res) => {
     const { symbol } = req.params;
     const { start, end, granularity } = req.query;
@@ -138,21 +152,7 @@ app.get((req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 🔐 Middleware de validación de clave
-app.use((req, res, next) => {
-    const clientKey = req.query.key || req.get("x-access-key");
 
-    if (!clientKey) {
-        return res.status(401).json({ error: "Falta encabezado x-access-key" });
-    }
-
-    if (clientKey !== ACCESS_KEY) {
-        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
-        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
-    }
-
-    next();
-});
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`✅ Servidor iniciado en http://localhost:${port}`);
