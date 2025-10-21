@@ -42,19 +42,30 @@ app.use((req, res, next) => {
     const origin = req.get("origin") || "";
     const referer = req.get("referer") || "";
     const fetchDest = req.get("sec-fetch-dest") || "";
-
     const autorizado = ALLOWED_ORIGINS.some(url =>
         origin.startsWith(url) || referer.startsWith(url)
     );
 
-    // Si no está dentro de un iframe o el dominio no es permitido → bloquear
-    if (!autorizado || fetchDest !== "iframe") {
+    // ✅ Permitimos recursos estáticos (css, js, images, api, etc.)
+    const esRecursoEstatico =
+        req.path.startsWith("/api/") ||
+        req.path.startsWith("/charting_library/") ||
+        req.path.endsWith(".js") ||
+        req.path.endsWith(".css") ||
+        req.path.endsWith(".png") ||
+        req.path.endsWith(".jpg") ||
+        req.path.endsWith(".jpeg") ||
+        req.path.endsWith(".ico");
+
+    // 🚫 Solo bloqueamos acceso directo a las páginas HTML
+    if (!autorizado && !esRecursoEstatico && fetchDest !== "iframe") {
         console.warn("🚫 Acceso directo bloqueado:", origin || referer || req.ip);
         return res.status(403).send("Acceso no autorizado");
     }
 
     next();
 });
+
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
 
 
@@ -80,11 +91,7 @@ app.use((req, res, next) => {
         ].join("; ")
     );
     // Para navegadores antiguos, refuerzo adicional
-    if (ALLOWED_ORIGINS.length > 0) {
-        res.setHeader("X-Frame-Options", `ALLOW-FROM ${ALLOWED_ORIGINS[0]}`);
-    } else {
-        res.setHeader("X-Frame-Options", "DENY");
-    }
+    res.removeHeader("X-Frame-Options");
     next();
 });
 
