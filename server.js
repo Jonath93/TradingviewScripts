@@ -21,6 +21,20 @@ app.use((req, res, next) => {
     next();
 });
 app.use((req, res, next) => {
+    res.setHeader(
+        "Content-Security-Policy",
+        [
+            "default-src 'self' https: data: blob:",
+            "script-src 'self' https: 'unsafe-inline' 'unsafe-eval' blob:",
+            "style-src 'self' https: 'unsafe-inline'",
+            "img-src * data: blob:",
+            "connect-src * data: blob:",
+            "font-src * data:",
+            "frame-src * blob:",
+            "worker-src * blob:",
+            "child-src blob:"
+        ].join("; ")
+    );
     if (
         req.path === "/favicon.ico" ||
         req.method === "OPTIONS" ||
@@ -45,20 +59,7 @@ app.use((req, res, next) => {
         console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
         return res.status(403).send("Acceso no autorizado");
     }
-    res.setHeader(
-        "Content-Security-Policy",
-        [
-            "default-src 'self' https: data: blob:",
-            "script-src 'self' https: 'unsafe-inline' 'unsafe-eval' blob:",
-            "style-src 'self' https: 'unsafe-inline'",
-            "img-src * data: blob:",
-            "connect-src * data: blob:",
-            "font-src * data:",
-            "frame-src * blob:",
-            "worker-src * blob:",
-            "child-src blob:"
-        ].join("; ")
-    );
+
     next();
 });
 
