@@ -18,23 +18,31 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
 
 
 app.use((req, res, next) => {
-    const allowedOrigins = ALLOWED_ORIGINS
+    const allowedOrigins = ALLOWED_ORIGINS;
     const origin = req.get("origin") || req.get("referer") || "";
 
+    // ⚠️ Saltar verificación para archivos estáticos y peticiones internas
+    if (
+        req.path.startsWith("/charting_library") ||
+        req.path.startsWith("/public") ||
+        req.path.startsWith("/favicon") ||
+        req.path.startsWith("/_next") ||  // por si usas algún bundler o CDN
+        req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|map)$/i)
+    ) {
+        return next();
+    }
+
+    // ✅ Validar origen
     const isAllowedOrigin = allowedOrigins.some(url => origin.startsWith(url));
 
     if (!isAllowedOrigin) {
-        console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
-        return res.status(403).send("Acceso no autorizado");
+        console.warn("🚫 Acceso no autorizado desde:", origin || "(sin origin)");
+        return res.status(403).json({ error: "Acceso no autorizado" });
     }
 
     next();
 });
-app.use(
-    "/charting_library",
-    express.static(path.join(__dirname, "public/charting_library"))
-);
-app.use(express.static(path.join(__dirname, "public")));
+
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
