@@ -16,11 +16,11 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .filter(Boolean);
 
 // ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
-app.use((req, res, next) => {
 
-    next();
-});
 app.use((req, res, next) => {
+    if (req.path === "/favicon.ico" || req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
     const allowedOrigins = ALLOWED_ORIGINS
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key");
