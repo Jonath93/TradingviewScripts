@@ -7,14 +7,29 @@ import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 const token = process.env.TOKEN;
+const ACCESS_KEY = process.env.ACCESS_KEY;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
+// 🔐 Middleware de validación de clave
+app.use((req, res, next) => {
+    const clientKey = req.get("x-access-key");
+
+    if (!clientKey) {
+        return res.status(401).json({ error: "Falta encabezado x-access-key" });
+    }
+
+    if (clientKey !== ACCESS_KEY) {
+        console.warn("🚫 ACCESS_KEY inválida desde:", req.get("origin") || "desconocido");
+        return res.status(403).json({ error: "Acceso denegado: clave incorrecta" });
+    }
+
+    next();
+});
 
 
 const corsOptions = {
