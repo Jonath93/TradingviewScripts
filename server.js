@@ -15,39 +15,31 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .map(s => s.trim())
     .filter(Boolean);
 
-// ✅ Encabezado CSP completo (TradingView necesita blob:, data:, etc.)
-
 app.use((req, res, next) => {
-    // Ignorar peticiones no relevantes (favicon, preflight, etc.)
+    // Ignorar peticiones irrelevantes (favicon, preflight)
     if (req.path === "/favicon.ico" || req.method === "OPTIONS") {
         return res.sendStatus(204);
     }
 
-    // Variables de entorno
-    const allowedOrigins = ALLOWED_ORIGINS || [];
-    const accessKey = ACCESS_KEY;
-
-    // Obtener origen y clave
     const origin = req.get("origin") || req.get("referer") || "";
     const key = req.query.key || req.get("x-access-key") || req.get("authorization") || "";
 
-    // Validar origen permitido
-    const isAllowedOrigin = allowedOrigins.some(url =>
-        origin.startsWith(url) || origin.includes(url)
-    );
+    // ✅ Permitir acceso directo (sin origin) si la key es válida
+    const isAllowedOrigin =
+        !origin || ALLOWED_ORIGINS.some(url => origin.startsWith(url) || origin.includes(url));
 
-    // Validar clave de acceso
-    const isValidKey = key === accessKey;
+    const isValidKey = key === ACCESS_KEY;
 
-    console.log("origin", origin);
-    // Si no cumple, cortar la solicitud
+    console.log("🌐 origin:", origin || "(sin origin)", "| key:", key);
+
     if (!isAllowedOrigin || !isValidKey) {
-        console.warn("🚫 Acceso no autorizado desde:", origin, "key:", key);
+        console.warn("🚫 Acceso no autorizado desde:", origin || "(sin origin)", "key:", key);
         return res.status(403).send("Acceso no autorizado");
     }
-    console.log("ya paso condicion ", isAllowedOrigin);
 
-    // Aplicar cabeceras de seguridad
+    console.log("✅ Autorizado desde:", origin || "(sin origin)");
+
+    // ✅ Cabeceras CSP necesarias para TradingView
     res.setHeader(
         "Content-Security-Policy",
         [
